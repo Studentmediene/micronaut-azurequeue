@@ -12,12 +12,12 @@ plugins {
     id "org.jlleitschuh.gradle.ktlint" version "$ktlintVersion"
     id "io.gitlab.arturbosch.detekt" version "1.11.0-RC1"
 
-    id "maven-publish"
     // Apply the java-library plugin for API and implementation separation.
     id "java-library"
+    id "maven-publish"
 }
 
-group "no.studentmediene.no.studentmediene.micronautazurequeue"
+group "no.studentmediene"
 version "1.0.0-SNAPSHOT"
 
 repositories {
@@ -143,6 +143,35 @@ detekt {
         txt {
             enabled = true
             destination = file("build/reports/detekt.txt")
+        }
+    }
+}
+
+java {
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        azureQueueLibrary(MavenPublication) {
+            groupId = group
+            artifactId = "${rootProject.name}"
+            version = version
+
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/Studentmediene/${rootProject.name}")
+            credentials {
+                // We have to use a personal access token as password
+                // See here for required scopes https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-scopes-and-permissions-for-github-container-registry
+                username = project.findProperty("GITHUB_USERNAME") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("GITHUB_PASSWORD") ?: System.getenv("GITHUB_PASSWORD")
+            }
         }
     }
 }
