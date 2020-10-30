@@ -1,11 +1,14 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+defaults: &defaults
+  docker:
+    - image: gradle:6.6-jdk14
+  working_directory: ~/repo
+
 jobs:
   validate-styles:
-    docker:
-      - image: gradle:6.6-jdk14
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -20,9 +23,7 @@ jobs:
       - run: ./gradlew ktlintCheck
       - run: ./gradlew detekt
   validate-tests:
-    docker:
-      - image: gradle:6.6-jdk14
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -48,9 +49,7 @@ jobs:
       - store_artifacts:
           path: build/reports/tests/test
   build:
-    docker:
-      - image: gradle:6.6-jdk14
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -68,9 +67,7 @@ jobs:
           paths:
             - build
   publish-to-repository:
-    docker:
-      - image: gradle:6.6-jdk14
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -83,10 +80,6 @@ jobs:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
       - run: ./gradlew --info publish
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - build
 
 workflows:
   version: 2
