@@ -1,0 +1,9 @@
+azure:
+  queue:
+    queue1:
+      queueName: queue2
+      connectionString: n/a
+    queue2:
+      queueName: queue1
+      connectionString: n/a
+
