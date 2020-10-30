@@ -18,7 +18,6 @@ plugins {
 }
 
 group "no.studentmediene"
-version "1.0.0-SNAPSHOT"
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -156,6 +155,7 @@ publishing {
         azureQueueLibrary(MavenPublication) {
             groupId = group
             artifactId = "${rootProject.name}"
+            // Version is defined in gradle.properties
             version = version
 
             from components.java
