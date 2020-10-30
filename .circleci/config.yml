@@ -67,6 +67,26 @@ jobs:
           root: ./
           paths:
             - build
+  publish-to-repository:
+    docker:
+      - image: gradle:6.6-jdk14
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            # Fallbacks to the latest cache
+            - v1-dependencies-
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+      - run: ./gradlew --info publish
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - build
 
 workflows:
   version: 2
@@ -78,3 +98,7 @@ workflows:
           requires:
             - validate-styles
             - validate-tests
+      - publish-to-repository:
+          context: Maven Library
+          requires:
+            - build
