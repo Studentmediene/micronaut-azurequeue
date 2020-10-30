@@ -102,3 +102,6 @@ workflows:
           context: Maven Library
           requires:
             - build
+          filters:
+            branches:
+              only: master
