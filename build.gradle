@@ -11,10 +11,13 @@ plugins {
     id "org.jetbrains.kotlin.plugin.allopen" version "$kotlinVersion"
     id "org.jlleitschuh.gradle.ktlint" version "$ktlintVersion"
     id "io.gitlab.arturbosch.detekt" version "1.11.0-RC1"
+    id "org.jetbrains.dokka" version "1.4.10.2"
+    id "com.jfrog.bintray" version "1.8.5"
 
     // Apply the java-library plugin for API and implementation separation.
     id "java-library"
     id "maven-publish"
+    id "java"
 }
 
 group "no.studentmediene"
@@ -95,6 +98,7 @@ java {
 allOpen {
     annotation("io.micronaut.aop.Around")
 }
+
 compileKotlin {
     kotlinOptions {
         jvmTarget = '11'
@@ -150,29 +154,73 @@ java {
     withSourcesJar()
 }
 
-publishing {
-    publications {
-        azureQueueLibrary(MavenPublication) {
-            groupId = group
-            artifactId = "${rootProject.name}"
-            // Version is defined in gradle.properties
-            version = version
-
-            from components.java
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
         }
     }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/Studentmediene/${rootProject.name}")
-            credentials {
-                // We have to use a personal access token as password
-                // See here for required scopes https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-scopes-and-permissions-for-github-container-registry
-                username = project.findProperty("GITHUB_USERNAME") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("GITHUB_PASSWORD") ?: System.getenv("GITHUB_PASSWORD")
+
+    developers {
+    }
+
+    scm {
+        url vcsUrl
+    }
+}
+
+publishing {
+    publications {
+        micronautStorareQueue(MavenPublication) {
+            from components.java
+
+            groupId group
+            artifactId rootProject.name
+            version version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', description)
+                root.appendNode('name', rootProject.name)
+                root.appendNode('url', vcsUrl)
+                root.children().last() + pomConfig
             }
         }
     }
+}
+
+bintray {
+    user = project.findProperty("BINTRAY_USER") ?: System.getenv("BINTRAY_USER")
+    key = project.findProperty("BINTRAY_TOKEN") ?: System.getenv("BINTRAY_TOKEN")
+    publications = ['micronautStorareQueue']
+
+    dryRun = false
+    override = false
+
+    pkg {
+        repo = rootProject.name
+        name = "${rootProject.name}"
+        websiteUrl = vcsUrl
+        desc = description
+        userOrg = 'studentmediene'
+        licenses = ['Apache-2.0']
+        publicDownloadNumbers = false
+        labels = ["micronaut", "azure", "azurestoragequeue"]
+        vcsUrl = "${vcsUrl}.git"
+
+        githubRepo = "studentmediene/${rootProject.name}"
+        githubReleaseNotesFile = "README.md"
+
+        version {
+            name = project.version
+            vcsTag = version
+            desc = "Build ${version}"
+            released  = new Date()
+        }
+    }
+
+    publish = true
 }
 
 tasks.withType(JavaExec) {
