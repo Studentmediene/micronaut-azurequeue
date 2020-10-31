@@ -68,6 +68,12 @@ jobs:
       - gradle_cache
       - run: ./gradlew --info bintrayUpload
       - run: ./gradlew --info bintrayPublish
+  trigger-on-tag:
+    <<: *defaults
+    steps:
+      - checkout
+      - gradle_cache
+      - run: echo "Found tag $CIRCLE_TAG"
 
 workflows:
   version: 2
@@ -86,3 +92,11 @@ workflows:
           filters:
             branches:
               only: master
+  publish-on-tags:
+    jobs:
+      - trigger-on-tag:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
